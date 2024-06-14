@@ -1,0 +1,27 @@
+name: Clean Git History
+
+on:
+  workflow_dispatch:
+
+jobs:
+  clean-history:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Remove .env from history
+      run: |
+        git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch .env' --prune-empty --tag-name-filter cat -- --all
+        rm -rf .git/refs/original/
+        git reflog expire --expire=now --all
+        git gc --prune=now --aggressive
+
+    - name: Push changes
+      run: |
+        git push origin --force --all
+        git push origin --force --tags
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
